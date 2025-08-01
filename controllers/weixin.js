@@ -56,6 +56,8 @@ class WeixinController {
    * 用于接收微信发送的消息并输出日志
    */
   static async receiveMessage(req, res) {
+      console.log('服务端收到的请求信息:', req);
+
     try {
       // 获取请求体中的消息内容
       const messageData = req.body;
