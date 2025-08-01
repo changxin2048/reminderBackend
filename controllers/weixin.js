@@ -11,14 +11,17 @@ class WeixinController {
   /**
    * 验证微信服务器签名
    * 按照微信官方文档要求：将token、timestamp、nonce三个参数进行字典序排序，拼接后sha1加密
+   * 注意：URL验证场景只需要token、timestamp、nonce三个参数，不包含encrypt_msg
    * @param {string} signature 微信加密签名
    * @param {string} timestamp 时间戳
    * @param {string} nonce 随机数
-   * @param {string} token 微信Token
    * @returns {boolean} 验证结果
    */
-  static checkSignature(signature, timestamp, nonce, token) {
+  static checkSignature(signature, timestamp, nonce) {
     try {
+      // 使用预定义的WECHAT_TOKEN常量
+      const token = WECHAT_TOKEN;
+      
       // 将token、timestamp、nonce三个参数进行字典序排序（对应PHP的sort($tmpArr, SORT_STRING)）
       const tmpArr = [token, timestamp, nonce];
       tmpArr.sort(); // JavaScript的sort()默认按字典序排序
@@ -106,7 +109,7 @@ class WeixinController {
       }
       
       // 进行签名验证
-      const isValid = WeixinController.checkSignature(signature, timestamp, nonce, WECHAT_TOKEN);
+      const isValid = WeixinController.checkSignature(signature, timestamp, nonce);
       
       if (isValid) {
         console.log('微信验证成功: 签名校验通过');
