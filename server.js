@@ -1,0 +1,105 @@
+const express = require('express');
+const cors = require('cors');
+const config = require('./config/config');
+const database = require('./config/database');
+
+// 导入路由
+const authRoutes = require('./routes/auth');
+const paymentRoutes = require('./routes/payment');
+const weixinRoutes = require('./routes/weixin');
+
+const app = express();
+
+// 中间件
+app.use(cors({
+  origin: ['chrome-extension://*', 'http://localhost:*', 'https://localhost:*'],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 请求日志
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// 健康检查
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: '服务运行正常',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API路由
+app.use('/api/auth', authRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/weixin', weixinRoutes);
+
+// 404处理
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: '接口不存在'
+  });
+});
+
+// 错误处理中间件
+app.use((err, req, res, next) => {
+  console.error('服务器错误:', err);
+  res.status(500).json({
+    success: false,
+    message: '服务器内部错误'
+  });
+});
+
+// 启动服务器
+async function startServer() {
+  try {
+    // 连接数据库
+    await database.connect();
+    console.log('数据库连接成功');
+    
+    // 启动HTTP服务器
+    app.listen(config.port, () => {
+      console.log(`服务器运行在端口 ${config.port}`);
+      console.log(`健康检查: http://localhost:${config.port}/health`);
+      console.log(`API文档: http://localhost:${config.port}/api`);
+    });
+    
+  } catch (error) {
+    console.error('服务器启动失败:', error);
+    process.exit(1);
+  }
+}
+
+// 优雅关闭
+process.on('SIGINT', async () => {
+  console.log('\n正在关闭服务器...');
+  try {
+    await database.close();
+    console.log('数据库连接已关闭');
+    process.exit(0);
+  } catch (error) {
+    console.error('关闭数据库连接失败:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\n收到SIGTERM信号，正在关闭服务器...');
+  try {
+    await database.close();
+    console.log('数据库连接已关闭');
+    process.exit(0);
+  } catch (error) {
+    console.error('关闭数据库连接失败:', error);
+    process.exit(1);
+  }
+});
+
+// 启动服务器
+startServer();
