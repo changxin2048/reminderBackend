@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 // TODO: 需要在配置文件中设置微信 Token
 // 请在 config/config.js 中添加 WECHAT_TOKEN 配置项
-const WECHAT_TOKEN = process.env.WECHAT_TOKEN || '94_5Eq3AmNu2KbSYx8BR_Np53RI-QWMCrxWRZFcHwmB1Zb7HfdC_X8xGfIDM9xMnlNCGalOQv43rnrHX1bSNO6L3eyk6L43zYwBKseVh1VLetEbacvJsEFbcCFCmQMIASeABAZRJ';
+const WECHAT_TOKEN = process.env.WECHAT_TOKEN || 'aaa';
 
 /*
  * 微信控制器类
@@ -23,7 +23,7 @@ class WeixinController {
       const token = WECHAT_TOKEN;
       
       // 将token、timestamp、nonce三个参数进行字典序排序（对应PHP的sort($tmpArr, SORT_STRING)）
-      const tmpArr = [token, timestamp, nonce];
+      const tmpArr = [timestamp, nonce,token];
       tmpArr.sort(); // JavaScript的sort()默认按字典序排序
       
       // 将三个参数字符串拼接成一个字符串（对应PHP的implode($tmpArr)）
