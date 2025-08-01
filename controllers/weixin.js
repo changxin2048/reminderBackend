@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 // TODO: 需要在配置文件中设置微信 Token
 // 请在 config/config.js 中添加 WECHAT_TOKEN 配置项
-const WECHAT_TOKEN = process.env.WECHAT_TOKEN || 'your_wechat_token_here';
+const WECHAT_TOKEN = process.env.WECHAT_TOKEN || '94_5Eq3AmNu2KbSYx8BR_Np53RI-QWMCrxWRZFcHwmB1Zb7HfdC_X8xGfIDM9xMnlNCGalOQv43rnrHX1bSNO6L3eyk6L43zYwBKseVh1VLetEbacvJsEFbcCFCmQMIASeABAZRJ';
 
 /*
  * 微信控制器类
@@ -10,6 +10,7 @@ const WECHAT_TOKEN = process.env.WECHAT_TOKEN || 'your_wechat_token_here';
 class WeixinController {
   /**
    * 验证微信服务器签名
+   * 按照微信官方文档要求：将token、timestamp、nonce三个参数进行字典序排序，拼接后sha1加密
    * @param {string} signature 微信加密签名
    * @param {string} timestamp 时间戳
    * @param {string} nonce 随机数
@@ -17,17 +18,33 @@ class WeixinController {
    * @returns {boolean} 验证结果
    */
   static checkSignature(signature, timestamp, nonce, token) {
-    // 将token、timestamp、nonce三个参数进行字典序排序
-    const tmpArr = [token, timestamp, nonce].sort();
-    
-    // 将三个参数字符串拼接成一个字符串
-    const tmpStr = tmpArr.join('');
-    
-    // 进行sha1加密
-    const hash = crypto.createHash('sha1').update(tmpStr).digest('hex');
-    
-    // 与signature对比
-    return hash === signature;
+    try {
+      // 将token、timestamp、nonce三个参数进行字典序排序（对应PHP的sort($tmpArr, SORT_STRING)）
+      const tmpArr = [token, timestamp, nonce];
+      tmpArr.sort(); // JavaScript的sort()默认按字典序排序
+      
+      // 将三个参数字符串拼接成一个字符串（对应PHP的implode($tmpArr)）
+      const tmpStr = tmpArr.join('');
+      
+      // 进行sha1加密（对应PHP的sha1($tmpStr)）
+      const hash = crypto.createHash('sha1').update(tmpStr).digest('hex');
+      
+      // 输出调试信息
+      console.log('=== 签名校验调试信息 ===');
+      console.log('原始参数: token=' + token + ', timestamp=' + timestamp + ', nonce=' + nonce);
+      console.log('排序后数组:', tmpArr);
+      console.log('拼接字符串:', tmpStr);
+      console.log('计算的hash:', hash);
+      console.log('微信signature:', signature);
+      console.log('校验结果:', hash === signature);
+      console.log('========================');
+      
+      // 与signature对比
+      return hash === signature;
+    } catch (error) {
+      console.error('签名校验过程出错:', error);
+      return false;
+    }
   }
 
   /**
