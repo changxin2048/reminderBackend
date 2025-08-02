@@ -19,6 +19,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 微信XML数据处理中间件
+app.use('/api/weixin', express.raw({ type: 'text/xml' }));
+app.use('/api/weixin', (req, res, next) => {
+  if (req.body && Buffer.isBuffer(req.body)) {
+    req.rawBody = req.body.toString('utf8');
+    req.body = req.body.toString('utf8');
+  }
+  next();
+});
+
 // 请求日志
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);

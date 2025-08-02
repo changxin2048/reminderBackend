@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const xml2js = require('xml2js');
 
 // TODO: 需要在配置文件中设置微信 Token
 // 请在 config/config.js 中添加 WECHAT_TOKEN 配置项
@@ -53,35 +54,73 @@ class WeixinController {
   /**
    * 接收微信消息处理方法
    * POST /weixin/msg
-   * 用于接收微信发送的消息并输出日志
+   * 用于接收微信发送的消息并回复用户内容
    */
   static async receiveMessage(req, res) {
-      console.log('服务端收到的请求信息:', req);
-
     try {
-      // 获取请求体中的消息内容
-      const messageData = req.body;
+      // 获取原始XML数据
+      let xmlData = '';
       
-      // 输出接收到的消息日志
+      // 如果req.body是字符串，直接使用；否则从req获取原始数据
+      if (typeof req.body === 'string') {
+        xmlData = req.body;
+      } else {
+        // 处理原始请求数据
+        xmlData = req.rawBody || JSON.stringify(req.body);
+      }
+      
       console.log('=== 接收到微信消息 ===');
       console.log('时间:', new Date().toISOString());
-      console.log('消息内容:', JSON.stringify(messageData, null, 2));
-      console.log('请求头:', JSON.stringify(req.headers, null, 2));
+      console.log('原始XML数据:', xmlData);
       console.log('========================');
       
-      // 返回成功响应
-      res.json({
-        success: true,
-        message: '消息接收成功',
-        timestamp: new Date().toISOString()
-      });
+      // 解析XML数据
+      const parser = new xml2js.Parser({ explicitArray: false });
+      const result = await parser.parseStringPromise(xmlData);
+      
+      const xml = result.xml;
+      const fromUserName = xml.FromUserName;
+      const toUserName = xml.ToUserName;
+      const msgType = xml.MsgType;
+      const content = xml.Content;
+      const createTime = xml.CreateTime;
+      
+      console.log('=== 解析后的消息内容 ===');
+      console.log('发送方:', fromUserName);
+      console.log('接收方:', toUserName);
+      console.log('消息类型:', msgType);
+      console.log('消息内容:', content);
+      console.log('========================');
+      
+      // 只处理文本消息
+      if (msgType === 'text' && content) {
+        // 构造回复XML消息（将FromUserName和ToUserName互换）
+        const replyTime = Math.floor(Date.now() / 1000);
+        const replyXml = `<xml>
+<ToUserName><![CDATA[${fromUserName}]]></ToUserName>
+<FromUserName><![CDATA[${toUserName}]]></FromUserName>
+<CreateTime>${replyTime}</CreateTime>
+<MsgType><![CDATA[text]]></MsgType>
+<Content><![CDATA[${content}]]></Content>
+</xml>`;
+        
+        console.log('=== 回复消息 ===');
+        console.log('回复XML:', replyXml);
+        console.log('================');
+        
+        // 设置正确的Content-Type并返回XML
+        res.set('Content-Type', 'application/xml');
+        res.send(replyXml);
+      } else {
+        // 非文本消息或无内容，返回success
+        console.log('非文本消息或无内容，返回success');
+        res.send('success');
+      }
       
     } catch (error) {
       console.error('处理微信消息失败:', error);
-      res.status(500).json({
-        success: false,
-        message: '服务器内部错误'
-      });
+      // 发生错误时返回success，避免微信服务器重试
+      res.send('success');
     }
   }
 
