@@ -1,14 +1,27 @@
 const crypto = require('crypto');
 const xml2js = require('xml2js');
+const axios = require('axios');
+const AIController = require('./ai');
 
 // TODO: 需要在配置文件中设置微信 Token
 // 请在 config/config.js 中添加 WECHAT_TOKEN 配置项
 const WECHAT_TOKEN = process.env.WECHAT_TOKEN || 'aaa';
 
+// TODO: 需要在环境变量中设置微信公众号的AppID和AppSecret
+// 请在 .env 文件中添加 WECHAT_APPID 和 WECHAT_APPSECRET 配置项
+const WECHAT_APPID = process.env.WECHAT_APPID || 'wxb064bf2a88950651';
+const WECHAT_APPSECRET = process.env.WECHAT_APPSECRET || '4fbf1607f1f786ecb4ae56cd1cdad3fe';
+
+// TODO: 测试阶段需要设置一个真实的用户openid
+// 可以通过微信公众号后台或者用户关注时获取
+const TEST_OPENID = process.env.TEST_OPENID || 'superx2048';
+
 /*
  * 微信控制器类
  */
 class WeixinController {
+  
+  
   /**
    * 验证微信服务器签名
    * 按照微信官方文档要求：将token、timestamp、nonce三个参数进行字典序排序，拼接后sha1加密
@@ -94,6 +107,12 @@ class WeixinController {
       
       // 只处理文本消息
       if (msgType === 'text' && content) {
+        // 创建AI控制器实例
+        const aiController = new AIController();
+        
+        // 使用AI生成回复内容
+        const aiReply = await aiController.generateResponse(content);
+        
         // 构造回复XML消息（将FromUserName和ToUserName互换）
         const replyTime = Math.floor(Date.now() / 1000);
         const replyXml = `<xml>
@@ -101,10 +120,12 @@ class WeixinController {
 <FromUserName><![CDATA[${toUserName}]]></FromUserName>
 <CreateTime>${replyTime}</CreateTime>
 <MsgType><![CDATA[text]]></MsgType>
-<Content><![CDATA[${content}]]></Content>
+<Content><![CDATA[${aiReply}]]></Content>
 </xml>`;
         
         console.log('=== 回复消息 ===');
+        console.log('用户消息:', content);
+        console.log('AI回复:', aiReply);
         console.log('回复XML:', replyXml);
         console.log('================');
         
@@ -164,6 +185,141 @@ class WeixinController {
     } catch (error) {
       console.error('微信URL验证失败:', error);
       res.status(500).send('error');
+    }
+  }
+
+  /**
+   * 获取微信access_token
+   * @returns {Promise<string>} access_token
+   */
+  static async getAccessToken() {
+    try {
+      const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${WECHAT_APPID}&secret=${WECHAT_APPSECRET}`;
+      
+      console.log('=== 获取access_token ===');
+      console.log('请求URL:', url);
+      
+      const response = await axios.get(url);
+      const data = response.data;
+      
+      console.log('响应数据:', data);
+      console.log('========================');
+      
+      if (data.access_token) {
+        return data.access_token;
+      } else {
+        throw new Error(`获取access_token失败: ${data.errmsg || '未知错误'}`);
+      }
+    } catch (error) {
+      console.error('获取access_token失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 发送客服消息
+   * @param {string} openid 用户openid
+   * @param {string} content 消息内容
+   * @returns {Promise<boolean>} 发送结果
+   */
+  static async sendCustomMessage(openid, content) {
+    try {
+      // 获取access_token
+      const accessToken = await WeixinController.getAccessToken();
+      
+      // 构造消息数据
+      const messageData = {
+        touser: openid,
+        msgtype: 'text',
+        text: {
+          content: content
+        }
+      };
+      
+      // 发送消息
+      const url = `https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=${accessToken}`;
+      
+      console.log('=== 发送客服消息 ===');
+      console.log('请求URL:', url);
+      console.log('消息数据:', JSON.stringify(messageData, null, 2));
+      
+      const response = await axios.post(url, messageData);
+      const result = response.data;
+      
+      console.log('响应结果:', result);
+      console.log('===================');
+      
+      if (result.errcode === 0) {
+        console.log('客服消息发送成功');
+        return true;
+      } else {
+        console.error(`客服消息发送失败: ${result.errmsg}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('发送客服消息异常:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 测试发送消息接口
+   * GET /weixin/sendmsg
+   * 发送固定测试消息给测试用户
+   */
+  static async sendTestMessage(req, res) {
+    try {
+      console.log('=== 测试发送消息 ===');
+      console.log('时间:', new Date().toISOString());
+      
+      // 检查配置
+      if (WECHAT_APPID === 'your_appid_here' || WECHAT_APPSECRET === 'your_appsecret_here') {
+        console.log('错误: 请先配置WECHAT_APPID和WECHAT_APPSECRET');
+        return res.status(500).json({
+          success: false,
+          message: '请先配置微信公众号的AppID和AppSecret'
+        });
+      }
+      
+      if (TEST_OPENID === 'test_openid_here') {
+        console.log('错误: 请先配置TEST_OPENID');
+        return res.status(500).json({
+          success: false,
+          message: '请先配置测试用户的OpenID'
+        });
+      }
+      
+      // 发送测试消息
+      const testMessage = '这是一条来自公众号消息';
+      const success = await WeixinController.sendCustomMessage(TEST_OPENID, testMessage);
+      
+      if (success) {
+        console.log('测试消息发送成功');
+        res.json({
+          success: true,
+          message: '测试消息发送成功',
+          data: {
+            openid: TEST_OPENID,
+            content: testMessage
+          }
+        });
+      } else {
+        console.log('测试消息发送失败');
+        res.status(500).json({
+          success: false,
+          message: '测试消息发送失败'
+        });
+      }
+      
+      console.log('==================');
+      
+    } catch (error) {
+      console.error('测试发送消息异常:', error);
+      res.status(500).json({
+        success: false,
+        message: '发送消息时发生异常',
+        error: error.message
+      });
     }
   }
 }

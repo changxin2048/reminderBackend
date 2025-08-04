@@ -17,4 +17,11 @@ weixinRouter.post('/msg', WeixinController.receiveMessage);
  */
 weixinRouter.get('/msg', WeixinController.verifyMessage);
 
+/**
+ * 测试发送消息接口
+ * GET /sendmsg
+ * 用于测试主动发送客服消息功能
+ */
+weixinRouter.get('/sendmsg', WeixinController.sendTestMessage);
+
 module.exports = weixinRouter;
