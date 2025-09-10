@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-  port: process.env.PORT || 3001,
+  port: process.env.PORT || 3000,
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback_secret_key',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'

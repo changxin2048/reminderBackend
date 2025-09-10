@@ -44,6 +44,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 根路径 - API服务信息
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    name: 'AI提醒助手后端服务',
+    version: '1.0.0',
+    description: '提供微信公众号集成、AI对话、用户认证和支付功能的后端API服务',
+    endpoints: {
+      health: '/health - 健康检查',
+      auth: '/api/auth/* - 用户认证相关接口',
+      payment: '/api/payment/* - 支付相关接口',
+      weixin: '/api/weixin/* - 微信公众号相关接口'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API路由
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);

@@ -1,0 +1,24 @@
+{
+  "button": [
+    {
+      "type": "click",
+      "name": "订阅通知",
+      "key": "subscribe_notification"
+    },
+    {
+      "name": "更多",
+      "sub_button": [
+        {
+          "type": "view",
+          "name": "APP下载",
+          "url": "https://aider.superx.xin/"
+        },
+        {
+          "type": "click",
+          "name": "退订通知",
+          "key": "unsubscribe_notification"
+        }
+      ]
+    }
+  ]
+}

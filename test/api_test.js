@@ -1,5 +1,5 @@
  // 简单的API测试脚本
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3000';
 
 // 测试用户注册
 async function testRegister() {

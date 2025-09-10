@@ -9,8 +9,8 @@ const WECHAT_TOKEN = process.env.WECHAT_TOKEN || 'aaa';
 
 // TODO: 需要在环境变量中设置微信公众号的AppID和AppSecret
 // 请在 .env 文件中添加 WECHAT_APPID 和 WECHAT_APPSECRET 配置项
-const WECHAT_APPID = process.env.WECHAT_APPID || 'wxb064bf2a88950651';
-const WECHAT_APPSECRET = process.env.WECHAT_APPSECRET || '4fbf1607f1f786ecb4ae56cd1cdad3fe';
+const WECHAT_APPID = process.env.WECHAT_APPID || 'wx9f263229f84414ed';
+const WECHAT_APPSECRET = process.env.WECHAT_APPSECRET || '9aeb07317be9b63b0cd0ecd8efea83ce';
 
 // TODO: 测试阶段需要设置一个真实的用户openid
 // 可以通过微信公众号后台或者用户关注时获取

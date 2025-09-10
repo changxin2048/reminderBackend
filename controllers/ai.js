@@ -45,7 +45,7 @@ class AIController {
         }
       });
 
-      const aiReply = response.data.choices[0].message.content;
+      const aiReply = response.data.choices[0].message.content.trim();
       console.log('AI回复:', aiReply);
       console.log('==================');
       
