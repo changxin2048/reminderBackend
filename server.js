@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const config = require('./config/config');
-const database = require('./config/database');
+const config = require('./src/config/config');
+const database = require('./src/config/database');
 
 // 导入路由
-const authRoutes = require('./routes/auth');
-const paymentRoutes = require('./routes/payment');
-const weixinRoutes = require('./routes/weixin');
+const authRoutes = require('./src/routes/auth');
+const paymentRoutes = require('./src/routes/payment');
+const weixinRoutes = require('./src/routes/weixin');
 
 const app = express();
 

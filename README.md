@@ -1,53 +1,109 @@
-# Reminder Extension Backend
+# AI提醒助手后端服务
 
-浏览器扩展后端服务，提供用户认证和付款功能。
+一个基于Express.js的Node.js后端服务，提供微信公众号集成、AI智能对话、用户认证和支付功能。
+
+## 项目结构
+
+```
+reminderBackend/
+├── src/                          # 源代码目录
+│   ├── config/                   # 配置文件
+│   │   ├── config.js            # 主配置文件
+│   │   ├── database.js          # 数据库配置
+│   │   └── wechat_menu.json     # 微信菜单配置
+│   ├── controllers/              # 控制器
+│   │   ├── ai.js               # AI对话控制器
+│   │   └── weixin.js           # 微信控制器
+│   ├── middleware/             # 中间件
+│   │   ├── auth.js            # 认证中间件
+│   │   └── validate.js        # 验证中间件
+│   ├── models/                 # 数据模型
+│   │   ├── payment.js         # 支付模型
+│   │   └── user.js            # 用户模型
+│   ├── routes/                 # 路由定义
+│   │   ├── auth.js            # 认证路由
+│   │   ├── payment.js         # 支付路由
+│   │   └── weixin.js          # 微信路由
+│   └── utils/                  # 工具函数
+│       ├── create_wechat_menu.js  # 微信菜单创建工具
+│       ├── hash.js              # 加密工具
+│       └── jwt.js               # JWT工具
+├── tests/                      # 测试文件
+│   ├── unit/                   # 单元测试
+│   │   └── api_test.js        # API单元测试
+│   └── integration/            # 集成测试
+│       └── wechat_test.js     # 微信功能测试
+├── database/                   # 数据库相关
+│   ├── init.js                # 数据库初始化
+│   └── init.sql               # 数据库SQL脚本
+├── docs/                       # 文档目录
+├── scripts/                    # 脚本目录
+├── server.js                   # 主服务器文件
+├── package.json               # 项目依赖配置
+├── .env.example               # 环境变量示例
+└── .gitignore                 # Git忽略文件
+```
 
 ## 功能特性
 
-- 用户注册/登录
-- JWT认证
-- 订阅计划管理
-- 支付接口集成
-- 微信公众号消息处理
+### ✅ 已完成功能
+
+#### 基础架构
+- Express.js 服务器搭建
+- SQLite 数据库配置
+- 环境变量管理
+- 基础中间件配置
+
+#### 用户认证系统
+- 用户注册接口
+- 用户登录接口
+- JWT 认证中间件
+- 用户信息获取和更新
+- 密码加密处理
+
+#### 支付系统
+- 支付订单创建接口
+- 支付状态查询接口
+- 支付回调处理
+- 订阅状态管理
+- 支付历史记录
+
+#### 微信公众号功能
+- 微信URL验证接口
+- 微信消息接收和回复
+- AI智能对话回复功能
 - 微信客服消息发送
-- AI智能对话回复
-- SQLite数据库
-
-## 技术栈
-
-- Node.js + Express.js
-- SQLite3 数据库
-- JWT 认证
-- bcryptjs 密码加密
-- 微信公众号API
-- XML消息解析
-- 智谱AI API集成
+- 自定义菜单配置
+- 功能测试脚本
 
 ## 快速开始
 
 ### 1. 安装依赖
-
 ```bash
-cd backend
 npm install
 ```
 
 ### 2. 配置环境变量
-
-复制 `.env` 文件并修改配置：
+复制 `.env.example` 为 `.env` 并填写相关配置：
 
 ```bash
 cp .env.example .env
 ```
 
-### 3. 初始化数据库
+需要配置的环境变量：
+- `PORT`: 服务器端口，默认3000
+- `WECHAT_TOKEN`: 微信公众号Token
+- `WECHAT_APPID`: 微信公众号AppID
+- `WECHAT_APPSECRET`: 微信公众号AppSecret
+- `ZHIPU_API_KEY`: 智谱AI API密钥
+- `JWT_SECRET`: JWT密钥
 
+### 3. 初始化数据库
 ```bash
 npm run init-db
 ```
 
-### 4. 启动服务
-
+### 4. 启动服务器
 ```bash
 # 开发模式
 npm run dev
@@ -56,113 +112,99 @@ npm run dev
 npm start
 ```
 
-## API 接口
+### 5. 运行测试
+```bash
+# 运行微信功能测试
+npm test
+
+# 运行单元测试
+npm run test:unit
+```
+
+## API接口文档
+
+### 基础接口
+- `GET /health` - 健康检查
+- `GET /` - API服务信息
 
 ### 认证接口
-
 - `POST /api/auth/register` - 用户注册
 - `POST /api/auth/login` - 用户登录
 - `GET /api/auth/profile` - 获取用户信息
 - `PUT /api/auth/profile` - 更新用户信息
 
-### 付款接口
-
-- `POST /api/payment/create` - 创建付款订单
-- `GET /api/payment/status/:orderId` - 查询付款状态
-- `POST /api/payment/callback/:method` - 支付回调
-- `GET /api/payment/subscription` - 获取订阅状态
-- `GET /api/payment/history` - 获取付款历史
+### 支付接口
+- `POST /api/payment/create` - 创建支付订单
+- `GET /api/payment/status/:orderId` - 查询支付状态
+- `POST /api/payment/webhook` - 支付回调
+- `GET /api/payment/history` - 支付历史
 
 ### 微信公众号接口
-
-- `GET /api/weixin/msg` - 微信URL验证
-- `POST /api/weixin/msg` - 接收微信消息
+- `GET /api/weixin` - 微信URL验证
+- `POST /api/weixin` - 接收微信消息
 - `GET /api/weixin/sendmsg` - 测试发送客服消息
 
-## 数据库结构
+## 微信配置
 
-- `users` - 用户表
-- `subscriptions` - 订阅表
-- `payments` - 付款记录表
-
-## 部署说明
-
-1. 安装 PM2: `npm install -g pm2`
-2. 启动服务: `pm2 start server.js --name reminder-backend`
-3. 配置 Nginx 反向代理（可选）
-
-## 微信公众号配置
-
-### 1. 环境变量配置
-
-在 `.env` 文件中配置以下变量：
-
-```bash
-# 微信公众号Token（用于URL验证）
-WECHAT_TOKEN=your_wechat_token_here
-
-# 微信公众号AppID
-WECHAT_APPID=your_wechat_appid_here
-
-# 微信公众号AppSecret
-WECHAT_APPSECRET=your_wechat_appsecret_here
-
-# 测试用户OpenID（用于测试发送消息）
-TEST_OPENID=your_test_openid_here
-
-# 智谱AI API密钥
-ZHIPU_API_KEY=your_zhipu_api_key_here
-```
-
-### 2. 微信公众号后台配置
-
-1. 登录微信公众平台
-2. 在「开发」-「基本配置」中设置服务器配置：
-   - URL: `https://yourdomain.com/api/weixin/msg`
-   - Token: 与环境变量 `WECHAT_TOKEN` 保持一致
-   - EncodingAESKey: 随机生成
+### 微信公众号后台配置
+1. 登录微信公众号后台
+2. 进入 开发 > 基本配置
+3. 设置服务器配置：
+   - URL: `https://yourdomain.com/api/weixin`
+   - Token: 与 `.env` 中的 `WECHAT_TOKEN` 一致
    - 消息加解密方式: 明文模式
 
-### 3. 功能说明
+### 创建微信菜单
+运行菜单创建脚本：
+```bash
+node src/utils/create_wechat_menu.js
+```
 
-- **URL验证**: 微信服务器验证服务器有效性
-- **消息接收**: 接收用户发送的消息并通过AI生成智能回复
-- **客服消息**: 主动向用户发送消息（需要在48小时内有交互）
-- **AI对话**: 集成智谱AI，提供智能对话功能
-- **自定义菜单**: 支持创建和管理公众号菜单
+## 开发指南
 
-### 4. 自定义菜单配置
+### 项目规范
+- 使用ES6+语法
+- 每个函数和方法都有详细的注释说明
+- 错误处理和日志记录完善
+- 代码风格统一，易于维护
 
-项目已预设微信自定义菜单配置，包含两个一级菜单：
+### 目录说明
+- `src/controllers/`: 处理业务逻辑
+- `src/models/`: 数据模型和数据库操作
+- `src/routes/`: 路由定义和接口映射
+- `src/middleware/`: 中间件函数
+- `src/utils/`: 通用工具函数
+- `src/config/`: 配置文件
+- `tests/`: 测试文件
 
-**菜单结构：**
-- **订阅通知**: 点击类型，用于用户订阅通知功能
-- **更多**: 包含二级菜单：
-  - APP下载: 跳转链接到APP下载页面
-  - 推动通知: 点击类型，用于推送通知功能
+### 添加新功能
+1. 在对应目录创建文件
+2. 更新路由配置
+3. 添加测试用例
+4. 更新文档和进度记录
 
-**使用方法：**
-1. 修改菜单配置：`config/wechat_menu.json`
-2. 确保已配置微信AppID和AppSecret环境变量
-3. 执行创建菜单命令：
-   ```bash
-   node utils/create_wechat_menu.js
-   ```
+## 注意事项
 
-**注意事项：**
-- 系统会自动获取access_token，无需手动配置
-- 菜单创建后24小时内对所有用户生效
-- 个性化菜单需要用户分组权限
-- **重要**：如果遇到40164错误（IP不在白名单），请在微信公众平台 -> 开发 -> 基本配置 -> IP白名单中添加当前服务器IP地址
-- **权限要求**：
-  - 服务号才能使用自定义菜单（订阅号需要认证）
-  - 公众号需要通过微信认证
-  - 如果遇到"api unauthorized"错误，请检查公众号类型和认证状态
+### 微信开发注意事项
+- 微信服务器需要HTTPS支持
+- Token必须和微信公众号后台配置一致
+- 客服消息只能在用户48小时内有交互时发送
+- 建议先在测试号进行功能验证
 
-## 安全注意事项
+### 安全考虑
+- 妥善保管AppSecret和API密钥
+- 生产环境使用HTTPS
+- 建议添加接口访问频率限制
+- 定期更新JWT密钥
 
-- 修改 JWT_SECRET
-- 配置实际的支付接口
-- 设置 HTTPS
-- 配置防火墙规则
-- 保护微信公众号的AppSecret
+## 技术支持
+
+如有问题，请检查：
+1. 环境变量配置是否正确
+2. 数据库连接是否正常
+3. 微信公众号后台配置是否完成
+4. 查看服务器日志获取详细错误信息
+
+## 许可证
+
+ISC License
